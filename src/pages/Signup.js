@@ -9,11 +9,14 @@ export default function Signup() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  // Use environment variable for backend
+  const backendUrl = process.env.REACT_APP_BACKEND_URL;
+
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
       // Step 1: normal signup
-      await axios.post("http://localhost:5000/api/auth/signup", {
+      await axios.post(`${backendUrl}/api/auth/signup`, {
         name,
         email,
         password,
@@ -21,16 +24,17 @@ export default function Signup() {
 
       // Step 2: get WebAuthn registration options
       const optionsRes = await axios.post(
-        "http://localhost:5000/api/auth/register-options",
+        `${backendUrl}/api/auth/register-options`,
         { email },
       );
 
+      // Step 3: trigger WebAuthn on browser/mobile
       const credential = await SimpleWebAuthnBrowser.startRegistration(
         optionsRes.data,
       );
 
-      // Step 3: send credential to backend for verification
-      await axios.post("http://localhost:5000/api/auth/register-verify", {
+      // Step 4: send credential to backend for verification
+      await axios.post(`${backendUrl}/api/auth/register-verify`, {
         email,
         credential,
       });
@@ -38,7 +42,7 @@ export default function Signup() {
       alert("Signup and fingerprint registration successful!");
       navigate("/login");
     } catch (err) {
-      console.error(err);
+      console.error("Signup error:", err);
       alert("Error: " + err.response?.data?.message || err.message);
     }
   };
